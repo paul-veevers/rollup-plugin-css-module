@@ -1,0 +1,59 @@
+{
+  "name": "rollup-plugin-css-module",
+  "version": "0.0.1",
+  "description": "Rollup plugin for CSS modules",
+  "main": "dist/rollup-plugin-css-module.cjs.js",
+  "jsnext:main": "dist/rollup-plugin-css-module.es6.js",
+  "files": [
+    "index.js",
+    "src"
+  ],
+  "scripts": {
+    "pretest": "eslint src",
+    "test": "ava tests/index.js",
+    "prebuild": "npm run test && rm -rf dist/*",
+    "build": "rollup -c",
+    "prepublish": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elevio/rollup-plugin-css-module.git"
+  },
+  "keywords": [
+    "rollup",
+    "rollup-plugin",
+    "css module",
+    "postcss"
+  ],
+  "author": "Paul Veevers <paul@elev.io>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/elevio/rollup-plugin-css-module/issues"
+  },
+  "homepage": "https://github.com/elevio/rollup-plugin-css-module#readme",
+  "devDependencies": {
+    "ava": "^0.15.1",
+    "babel-eslint": "^6.1.2",
+    "babel-preset-es2015-rollup": "^1.1.1",
+    "babel-preset-stage-1": "^6.5.0",
+    "babel-register": "^6.9.0",
+    "eslint": "^3.3.1",
+    "eslint-config-airbnb-base": "^5.0.2",
+    "eslint-plugin-import": "^1.13.0",
+    "jsdom": "^9.2.1",
+    "postcss-nested": "^1.0.0",
+    "require-from-string": "^1.1.0",
+    "rollup-plugin-babel": "^2.4.0"
+  },
+  "dependencies": {
+    "css-modules-loader-core": "^1.0.0",
+    "rollup": "^0.29.1",
+    "rollup-pluginutils": "^1.2.0"
+  },
+  "ava": {
+    "require": [
+      "./tests/helpers/set-browser-env.js",
+      "babel-register"
+    ]
+  }
+}
