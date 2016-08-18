@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "pretest": "eslint src",
-    "test": "ava tests/index.js",
+    "test": "ava test.js",
     "prebuild": "npm run test && rm -rf dist/*",
     "build": "rollup -c",
     "prepublish": "npm run build"

@@ -4,7 +4,8 @@ import Core from 'css-modules-loader-core';
 import insertCss from './insert-css.js';
 
 function generateLongName(name, filename) {
-  const sanitisedPath = filename.replace(/\.[^\.\/\\]+$/, '')
+  const sanitisedPath = filename.replace(process.cwd(), '')
+    .replace(/\.[^\.\/\\]+$/, '')
     .replace(/[\W_]+/g, '_')
     .replace(/^_|_$/g, '');
   return `_${sanitisedPath}__${name}`;
@@ -21,9 +22,15 @@ export default function cssModule(options = {}) {
   const extensions = options.extensions || ['.css'];
   const before = options.before || [];
   const after = options.after || [];
+  let globals = options.globals || [];
 
-  // css accumulator
-  let allCss = '';
+  if (globals.length > 0) {
+    globals = globals.map((global) => path.join(process.cwd(), global));
+  }
+
+  // css accumulators
+  let globalCss = '';
+  let localCss = '';
 
   // setup core
   Core.scope.generateScopedName = options.generateScopedName || generateLongName;
@@ -34,8 +41,9 @@ export default function cssModule(options = {}) {
 
   // rollup plugin exports
   function intro() {
-    const compiled = compile(allCss);
-    allCss = '';
+    const compiled = compile(globalCss + localCss);
+    globalCss = '';
+    localCss = '';
     return compiled;
   }
 
@@ -44,7 +52,11 @@ export default function cssModule(options = {}) {
     if (extensions.indexOf(path.extname(id)) === -1) return null;
     return coreInstance.load(code, id)
       .then(result => {
-        allCss = `${allCss} ${result.injectableSource}`;
+        if (globals.indexOf(id) > -1) {
+          globalCss = `${globalCss} ${result.injectableSource}`;
+        } else {
+          localCss = `${localCss} ${result.injectableSource}`;
+        }
         return {
           code: `export default ${JSON.stringify(result.exportTokens)};`,
         };

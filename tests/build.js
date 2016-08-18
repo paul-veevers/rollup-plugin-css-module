@@ -10,11 +10,14 @@ const babelOpts = {
 
 export function buildDefault() {
   return rollup.rollup({
-    entry: './stubs/default.js',
+    entry: './tests/stubs/default.js',
     plugins: [
       css({
         before: [
           require('postcss-nested'),
+        ],
+        globals: [
+          './tests/stubs/default.css',
         ],
       }),
       babel(babelOpts),
