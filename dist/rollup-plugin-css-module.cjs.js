@@ -22,7 +22,7 @@ function insertCss(css) {
 }
 
 function generateLongName(name, filename) {
-  var sanitisedPath = filename.replace(/\.[^\.\/\\]+$/, '').replace(/[\W_]+/g, '_').replace(/^_|_$/g, '');
+  var sanitisedPath = filename.replace(process.cwd(), '').replace(/\.[^\.\/\\]+$/, '').replace(/[\W_]+/g, '_').replace(/^_|_$/g, '');
   return '_' + sanitisedPath + '__' + name;
 }
 
@@ -39,9 +39,17 @@ function cssModule() {
   var extensions = options.extensions || ['.css'];
   var before = options.before || [];
   var after = options.after || [];
+  var globals = options.globals || [];
 
-  // css accumulator
-  var allCss = '';
+  if (globals.length > 0) {
+    globals = globals.map(function (global) {
+      return path.join(process.cwd(), global);
+    });
+  }
+
+  // css accumulators
+  var globalCss = '';
+  var localCss = '';
 
   // setup core
   Core.scope.generateScopedName = options.generateScopedName || generateLongName;
@@ -52,8 +60,9 @@ function cssModule() {
 
   // rollup plugin exports
   function intro() {
-    var compiled = compile(allCss);
-    allCss = '';
+    var compiled = compile(globalCss + localCss);
+    globalCss = '';
+    localCss = '';
     return compiled;
   }
 
@@ -61,7 +70,11 @@ function cssModule() {
     if (!filter(id)) return null;
     if (extensions.indexOf(path.extname(id)) === -1) return null;
     return coreInstance.load(code, id).then(function (result) {
-      allCss = allCss + ' ' + result.injectableSource;
+      if (globals.indexOf(id) > -1) {
+        globalCss = globalCss + ' ' + result.injectableSource;
+      } else {
+        localCss = localCss + ' ' + result.injectableSource;
+      }
       return {
         code: 'export default ' + JSON.stringify(result.exportTokens) + ';'
       };

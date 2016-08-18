@@ -29,8 +29,8 @@ export default function cssModule(options = {}) {
   }
 
   // css accumulators
-  let globalCss = '';
-  let localCss = '';
+  const globalCss = {};
+  const localCss = {};
 
   // setup core
   Core.scope.generateScopedName = options.generateScopedName || generateLongName;
@@ -41,10 +41,9 @@ export default function cssModule(options = {}) {
 
   // rollup plugin exports
   function intro() {
-    const compiled = compile(globalCss + localCss);
-    globalCss = '';
-    localCss = '';
-    return compiled;
+    const globalReduced = Object.keys(globalCss).reduce((acc, key) => acc + globalCss[key], '');
+    const localReduced = Object.keys(localCss).reduce((acc, key) => acc + localCss[key], '');
+    return compile(globalReduced + localReduced);
   }
 
   function transform(code, id) {
@@ -53,9 +52,9 @@ export default function cssModule(options = {}) {
     return coreInstance.load(code, id)
       .then(result => {
         if (globals.indexOf(id) > -1) {
-          globalCss = `${globalCss} ${result.injectableSource}`;
+          globalCss[id] = result.injectableSource;
         } else {
-          localCss = `${localCss} ${result.injectableSource}`;
+          localCss[id] = result.injectableSource;
         }
         return {
           code: `export default ${JSON.stringify(result.exportTokens)};`,
