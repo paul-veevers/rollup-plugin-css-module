@@ -48,8 +48,8 @@ function cssModule() {
   }
 
   // css accumulators
-  var globalCss = '';
-  var localCss = '';
+  var globalCss = {};
+  var localCss = {};
 
   // setup core
   Core.scope.generateScopedName = options.generateScopedName || generateLongName;
@@ -60,10 +60,13 @@ function cssModule() {
 
   // rollup plugin exports
   function intro() {
-    var compiled = compile(globalCss + localCss);
-    globalCss = '';
-    localCss = '';
-    return compiled;
+    var globalReduced = Object.keys(globalCss).reduce(function (acc, key) {
+      return acc + globalCss[key];
+    }, '');
+    var localReduced = Object.keys(localCss).reduce(function (acc, key) {
+      return acc + localCss[key];
+    }, '');
+    return compile(globalReduced + localReduced);
   }
 
   function transform(code, id) {
@@ -71,9 +74,9 @@ function cssModule() {
     if (extensions.indexOf(path.extname(id)) === -1) return null;
     return coreInstance.load(code, id).then(function (result) {
       if (globals.indexOf(id) > -1) {
-        globalCss = globalCss + ' ' + result.injectableSource;
+        globalCss[id] = result.injectableSource;
       } else {
-        localCss = localCss + ' ' + result.injectableSource;
+        localCss[id] = result.injectableSource;
       }
       return {
         code: 'export default ' + JSON.stringify(result.exportTokens) + ';'

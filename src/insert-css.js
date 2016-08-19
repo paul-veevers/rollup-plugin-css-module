@@ -10,5 +10,4 @@ export default function insertCss(css) {
   } else {
     styleElement.textContent = css;
   }
-  return styleElement;
 }

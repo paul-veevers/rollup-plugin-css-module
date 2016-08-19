@@ -16,6 +16,9 @@ export function buildDefault() {
         before: [
           require('postcss-nested'),
         ],
+        after: [
+          // require('cssnano'),
+        ],
         globals: [
           './tests/stubs/default.css',
         ],

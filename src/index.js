@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import { createFilter } from 'rollup-pluginutils';
 import Core from 'css-modules-loader-core';
@@ -16,6 +17,15 @@ function compile(css) {
   return `(${insertCss.toString()})(${stringifiedCss});`;
 }
 
+function getContentsOfFile(path) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(path, (err, data) => {
+      if (err) return reject(err);
+      return resolve(data);
+    });
+  });
+}
+
 export default function cssModule(options = {}) {
   // options
   const filter = createFilter(options.include, options.exclude);
@@ -30,26 +40,45 @@ export default function cssModule(options = {}) {
 
   // css accumulators
   const globalCss = {};
+  const importedCss = {};
   const localCss = {};
 
   // setup core
   Core.scope.generateScopedName = options.generateScopedName || generateLongName;
-  const defaultPlugins = [Core.values, Core.localByDefault, Core.scope];
-  const pluginsBefore = defaultPlugins.concat(before);
+  const defaultPlugins = [Core.values, Core.localByDefault, Core.extractImports, Core.scope];
+  const pluginsBefore = before.concat(defaultPlugins);
   const plugins = pluginsBefore.concat(after);
   const coreInstance = new Core(plugins);
+
+  function loadCss(code, id) {
+    return coreInstance.load(code, id, null, importResolver);
+  }
+
+  function importResolver(file, relativeTo, depTrace) {
+    const relativeFilePath = file.split('"').join('');
+    const absoluteFilePath = path.join(process.cwd(), relativeFilePath);
+    return getContentsOfFile(relativeFilePath)
+      .then((contents) => {
+        return loadCss(contents, absoluteFilePath);
+      })
+      .then(result => {
+        importedCss[absoluteFilePath] = result.injectableSource;
+        return result.exportTokens;
+      });
+  }
 
   // rollup plugin exports
   function intro() {
     const globalReduced = Object.keys(globalCss).reduce((acc, key) => acc + globalCss[key], '');
+    const importedReduced = Object.keys(importedCss).reduce((acc, key) => acc + importedCss[key], '');
     const localReduced = Object.keys(localCss).reduce((acc, key) => acc + localCss[key], '');
-    return compile(globalReduced + localReduced);
+    return compile(globalReduced + importedReduced + localReduced);
   }
 
   function transform(code, id) {
     if (!filter(id)) return null;
     if (extensions.indexOf(path.extname(id)) === -1) return null;
-    return coreInstance.load(code, id)
+    return loadCss(code, id)
       .then(result => {
         if (globals.indexOf(id) > -1) {
           globalCss[id] = result.injectableSource;

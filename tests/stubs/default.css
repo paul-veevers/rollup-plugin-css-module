@@ -1,6 +1,17 @@
+@value primary, secondary from "tests/stubs/utils.css";
+
 .button {
-  border-color: red;
-  div {
-    color: blue;
-  }
+  border-color: primary;
+}
+
+.headingColor {
+  color: secondary;
+}
+
+.redHeading {
+  composes: headingColor;
+}
+
+.margin {
+  composes: marginUtils from 'tests/stubs/utils.css';
 }
