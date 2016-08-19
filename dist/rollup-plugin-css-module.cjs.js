@@ -2,6 +2,7 @@
 
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
+var fs = _interopDefault(require('fs'));
 var path = _interopDefault(require('path'));
 var rollupPluginutils = require('rollup-pluginutils');
 var Core = _interopDefault(require('css-modules-loader-core'));
@@ -18,7 +19,6 @@ function insertCss(css) {
   } else {
     styleElement.textContent = css;
   }
-  return styleElement;
 }
 
 function generateLongName(name, filename) {
@@ -29,6 +29,15 @@ function generateLongName(name, filename) {
 function compile(css) {
   var stringifiedCss = JSON.stringify(css);
   return '(' + insertCss.toString() + ')(' + stringifiedCss + ');';
+}
+
+function getContentsOfFile(filePath) {
+  return new Promise(function (resolve, reject) {
+    fs.readFile(filePath, function (err, data) {
+      if (err) return reject(err);
+      return resolve(data);
+    });
+  });
 }
 
 function cssModule() {
@@ -49,30 +58,50 @@ function cssModule() {
 
   // css accumulators
   var globalCss = {};
+  var importedCss = {};
   var localCss = {};
 
   // setup core
   Core.scope.generateScopedName = options.generateScopedName || generateLongName;
-  var defaultPlugins = [Core.values, Core.localByDefault, Core.scope];
-  var pluginsBefore = defaultPlugins.concat(before);
+  var defaultPlugins = [Core.values, Core.localByDefault, Core.extractImports, Core.scope];
+  var pluginsBefore = before.concat(defaultPlugins);
   var plugins = pluginsBefore.concat(after);
   var coreInstance = new Core(plugins);
+
+  function loadCss(code, id) {
+    return coreInstance.load(code, id, null, importResolver);
+  }
+
+  function importResolver(file) {
+    var relativeFilePath = file.split('"').join('');
+    var absoluteFilePath = path.join(process.cwd(), relativeFilePath);
+    return getContentsOfFile(relativeFilePath).then(function (contents) {
+      return loadCss(contents, absoluteFilePath);
+    }).then(function (result) {
+      importedCss[absoluteFilePath] = result.injectableSource;
+      return result.exportTokens;
+    });
+  }
 
   // rollup plugin exports
   function intro() {
     var globalReduced = Object.keys(globalCss).reduce(function (acc, key) {
       return acc + globalCss[key];
     }, '');
+    var importedReduced = Object.keys(importedCss).reduce(function (acc, key) {
+      return acc + importedCss[key];
+    }, '');
     var localReduced = Object.keys(localCss).reduce(function (acc, key) {
       return acc + localCss[key];
     }, '');
-    return compile(globalReduced + localReduced);
+    var concatenated = globalReduced + importedReduced + localReduced;
+    return compile(concatenated);
   }
 
   function transform(code, id) {
     if (!filter(id)) return null;
     if (extensions.indexOf(path.extname(id)) === -1) return null;
-    return coreInstance.load(code, id).then(function (result) {
+    return loadCss(code, id).then(function (result) {
       if (globals.indexOf(id) > -1) {
         globalCss[id] = result.injectableSource;
       } else {

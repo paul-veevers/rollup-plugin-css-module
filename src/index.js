@@ -1,3 +1,6 @@
+/* eslint-disable no-use-before-define */
+/* eslint-disable max-len */
+
 import fs from 'fs';
 import path from 'path';
 import { createFilter } from 'rollup-pluginutils';
@@ -17,9 +20,9 @@ function compile(css) {
   return `(${insertCss.toString()})(${stringifiedCss});`;
 }
 
-function getContentsOfFile(path) {
+function getContentsOfFile(filePath) {
   return new Promise((resolve, reject) => {
-    fs.readFile(path, (err, data) => {
+    fs.readFile(filePath, (err, data) => {
       if (err) return reject(err);
       return resolve(data);
     });
@@ -54,13 +57,11 @@ export default function cssModule(options = {}) {
     return coreInstance.load(code, id, null, importResolver);
   }
 
-  function importResolver(file, relativeTo, depTrace) {
+  function importResolver(file) {
     const relativeFilePath = file.split('"').join('');
     const absoluteFilePath = path.join(process.cwd(), relativeFilePath);
     return getContentsOfFile(relativeFilePath)
-      .then((contents) => {
-        return loadCss(contents, absoluteFilePath);
-      })
+      .then((contents) => loadCss(contents, absoluteFilePath))
       .then(result => {
         importedCss[absoluteFilePath] = result.injectableSource;
         return result.exportTokens;
@@ -72,7 +73,8 @@ export default function cssModule(options = {}) {
     const globalReduced = Object.keys(globalCss).reduce((acc, key) => acc + globalCss[key], '');
     const importedReduced = Object.keys(importedCss).reduce((acc, key) => acc + importedCss[key], '');
     const localReduced = Object.keys(localCss).reduce((acc, key) => acc + localCss[key], '');
-    return compile(globalReduced + importedReduced + localReduced);
+    const concatenated = globalReduced + importedReduced + localReduced;
+    return compile(concatenated);
   }
 
   function transform(code, id) {
