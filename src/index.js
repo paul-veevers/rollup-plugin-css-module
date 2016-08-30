@@ -28,7 +28,6 @@ export function generateDependableShortName(name, filename) {
     .replace(/[\W_]+/g, '_')
     .replace(/^_|_$/g, '');
   const hash = stringHash(`${sanitisedPath}${name}`).toString(36).substr(0, 5);
-  console.log(`_${hash}`);
   return `_${hash}`;
 }
 
