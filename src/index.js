@@ -5,15 +5,8 @@ import fs from 'fs';
 import path from 'path';
 import { createFilter } from 'rollup-pluginutils';
 import Core from 'css-modules-loader-core';
+import stringHash from 'string-hash';
 import insertCss from './insert-css.js';
-
-function generateLongName(name, filename) {
-  const sanitisedPath = filename.replace(process.cwd(), '')
-    .replace(/\.[^\.\/\\]+$/, '')
-    .replace(/[\W_]+/g, '_')
-    .replace(/^_|_$/g, '');
-  return `_${sanitisedPath}__${name}`;
-}
 
 function compile(css) {
   const stringifiedCss = JSON.stringify(css);
@@ -27,6 +20,31 @@ function getContentsOfFile(filePath) {
       return resolve(data);
     });
   });
+}
+
+export function generateDependableShortName(name, filename) {
+  const sanitisedPath = filename.replace(process.cwd(), '')
+    .replace(/\.[^\.\/\\]+$/, '')
+    .replace(/[\W_]+/g, '_')
+    .replace(/^_|_$/g, '');
+  const hash = stringHash(`${sanitisedPath}${name}`).toString(36).substr(0, 5);
+  console.log(`_${hash}`);
+  return `_${hash}`;
+}
+
+export function generateShortName(name, filename, css) {
+  const i = css.indexOf(`.${name}`);
+  const numLines = css.substr(0, i).split(/[\r\n]/).length;
+  const hash = stringHash(css).toString(36).substr(0, 5);
+  return `_${name}_${hash}_${numLines}`;
+}
+
+export function generateLongName(name, filename) {
+  const sanitisedPath = filename.replace(process.cwd(), '')
+    .replace(/\.[^\.\/\\]+$/, '')
+    .replace(/[\W_]+/g, '_')
+    .replace(/^_|_$/g, '');
+  return `_${sanitisedPath}__${name}`;
 }
 
 export default function cssModule(options = {}) {

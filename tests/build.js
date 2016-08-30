@@ -1,6 +1,6 @@
 import rollup from 'rollup';
 import babel from 'rollup-plugin-babel';
-import css from '../src/index.js';
+import css, { generateDependableShortName } from '../src/index.js';
 
 const babelOpts = {
   babelrc: false,
@@ -17,11 +17,12 @@ export function buildDefault() {
           require('postcss-nested'),
         ],
         after: [
-          // require('cssnano'),
+          require('cssnano'),
         ],
         globals: [
           './tests/stubs/default.css',
         ],
+        generateScopedName: generateDependableShortName,
       }),
       babel(babelOpts),
     ],

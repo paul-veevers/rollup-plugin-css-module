@@ -1,11 +1,14 @@
 'use strict';
 
+Object.defineProperty(exports, '__esModule', { value: true });
+
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
 var fs = _interopDefault(require('fs'));
 var path = _interopDefault(require('path'));
 var rollupPluginutils = require('rollup-pluginutils');
 var Core = _interopDefault(require('css-modules-loader-core'));
+var stringHash = _interopDefault(require('string-hash'));
 
 // Credit: https://github.com/substack/insert-css/blob/master/index.js
 // Heavily modified
@@ -21,11 +24,6 @@ function insertCss(css) {
   }
 }
 
-function generateLongName(name, filename) {
-  var sanitisedPath = filename.replace(process.cwd(), '').replace(/\.[^\.\/\\]+$/, '').replace(/[\W_]+/g, '_').replace(/^_|_$/g, '');
-  return '_' + sanitisedPath + '__' + name;
-}
-
 function compile(css) {
   var stringifiedCss = JSON.stringify(css);
   return '(' + insertCss.toString() + ')(' + stringifiedCss + ');';
@@ -38,6 +36,25 @@ function getContentsOfFile(filePath) {
       return resolve(data);
     });
   });
+}
+
+function generateDependableShortName(name, filename) {
+  var sanitisedPath = filename.replace(process.cwd(), '').replace(/\.[^\.\/\\]+$/, '').replace(/[\W_]+/g, '_').replace(/^_|_$/g, '');
+  var hash = stringHash('' + sanitisedPath + name).toString(36).substr(0, 5);
+  console.log('_' + hash);
+  return '_' + hash;
+}
+
+function generateShortName(name, filename, css) {
+  var i = css.indexOf('.' + name);
+  var numLines = css.substr(0, i).split(/[\r\n]/).length;
+  var hash = stringHash(css).toString(36).substr(0, 5);
+  return '_' + name + '_' + hash + '_' + numLines;
+}
+
+function generateLongName(name, filename) {
+  var sanitisedPath = filename.replace(process.cwd(), '').replace(/\.[^\.\/\\]+$/, '').replace(/[\W_]+/g, '_').replace(/^_|_$/g, '');
+  return '_' + sanitisedPath + '__' + name;
 }
 
 function cssModule() {
@@ -120,4 +137,7 @@ function cssModule() {
   };
 }
 
-module.exports = cssModule;
+exports.generateDependableShortName = generateDependableShortName;
+exports.generateShortName = generateShortName;
+exports.generateLongName = generateLongName;
+exports['default'] = cssModule;

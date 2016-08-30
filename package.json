@@ -1,6 +1,6 @@
 {
   "name": "rollup-plugin-css-module",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Rollup plugin for CSS modules",
   "main": "dist/rollup-plugin-css-module.cjs.js",
   "jsnext:main": "dist/rollup-plugin-css-module.es6.js",
@@ -50,7 +50,8 @@
   "dependencies": {
     "css-modules-loader-core": "^1.0.0",
     "rollup": "^0.29.1",
-    "rollup-pluginutils": "^1.2.0"
+    "rollup-pluginutils": "^1.2.0",
+    "string-hash": "^1.1.0"
   },
   "ava": {
     "require": [

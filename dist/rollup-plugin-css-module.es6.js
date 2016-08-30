@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { createFilter } from 'rollup-pluginutils';
 import Core from 'css-modules-loader-core';
+import stringHash from 'string-hash';
 
 // Credit: https://github.com/substack/insert-css/blob/master/index.js
 // Heavily modified
@@ -17,11 +18,6 @@ function insertCss(css) {
   }
 }
 
-function generateLongName(name, filename) {
-  var sanitisedPath = filename.replace(process.cwd(), '').replace(/\.[^\.\/\\]+$/, '').replace(/[\W_]+/g, '_').replace(/^_|_$/g, '');
-  return '_' + sanitisedPath + '__' + name;
-}
-
 function compile(css) {
   var stringifiedCss = JSON.stringify(css);
   return '(' + insertCss.toString() + ')(' + stringifiedCss + ');';
@@ -34,6 +30,25 @@ function getContentsOfFile(filePath) {
       return resolve(data);
     });
   });
+}
+
+function generateDependableShortName(name, filename) {
+  var sanitisedPath = filename.replace(process.cwd(), '').replace(/\.[^\.\/\\]+$/, '').replace(/[\W_]+/g, '_').replace(/^_|_$/g, '');
+  var hash = stringHash('' + sanitisedPath + name).toString(36).substr(0, 5);
+  console.log('_' + hash);
+  return '_' + hash;
+}
+
+function generateShortName(name, filename, css) {
+  var i = css.indexOf('.' + name);
+  var numLines = css.substr(0, i).split(/[\r\n]/).length;
+  var hash = stringHash(css).toString(36).substr(0, 5);
+  return '_' + name + '_' + hash + '_' + numLines;
+}
+
+function generateLongName(name, filename) {
+  var sanitisedPath = filename.replace(process.cwd(), '').replace(/\.[^\.\/\\]+$/, '').replace(/[\W_]+/g, '_').replace(/^_|_$/g, '');
+  return '_' + sanitisedPath + '__' + name;
 }
 
 function cssModule() {
@@ -116,4 +131,4 @@ function cssModule() {
   };
 }
 
-export default cssModule;
+export { generateDependableShortName, generateShortName, generateLongName };export default cssModule;
