@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { createFilter } from 'rollup-pluginutils';
 import Core from 'css-modules-loader-core';
+import postcss from 'postcss';
 import stringHash from 'string-hash';
 import insertCss from './insert-css.js';
 
@@ -22,7 +23,16 @@ function getContentsOfFile(filePath) {
   });
 }
 
-export function generateDependableShortName(name, filename) {
+function postcssForceAfter(css, plugins) {
+  if (plugins.length === 0) return css;
+  return postcss(plugins)
+    .process(css)
+    .then((result) => result.css);
+}
+
+export function generateDependableShortName(ignore, name, filename) {
+  console.log('ignore', ignore, name);
+  if (ignore.indexOf(name) > -1) return name;
   const sanitisedPath = filename.replace(process.cwd(), '')
     .replace(/\.[^\.\/\\]+$/, '')
     .replace(/[\W_]+/g, '_')
@@ -31,14 +41,16 @@ export function generateDependableShortName(name, filename) {
   return `_${hash}`;
 }
 
-export function generateShortName(name, filename, css) {
+export function generateShortName(ignore, name, filename, css) {
+  if (ignore.indexOf(name) > -1) return name;
   const i = css.indexOf(`.${name}`);
   const numLines = css.substr(0, i).split(/[\r\n]/).length;
   const hash = stringHash(css).toString(36).substr(0, 5);
   return `_${name}_${hash}_${numLines}`;
 }
 
-export function generateLongName(name, filename) {
+export function generateLongName(ignore, name, filename) {
+  if (ignore.indexOf(name) > -1) return name;
   const sanitisedPath = filename.replace(process.cwd(), '')
     .replace(/\.[^\.\/\\]+$/, '')
     .replace(/[\W_]+/g, '_')
@@ -52,6 +64,8 @@ export default function cssModule(options = {}) {
   const extensions = options.extensions || ['.css'];
   const before = options.before || [];
   const after = options.after || [];
+  const afterForced = options.afterForced || [];
+  const ignore = options.ignore || [];
   let globals = options.globals || [];
 
   if (globals.length > 0) {
@@ -64,7 +78,7 @@ export default function cssModule(options = {}) {
   const localCss = {};
 
   // setup core
-  Core.scope.generateScopedName = options.generateScopedName || generateLongName;
+  Core.scope.generateScopedName = options.generateScopedName.bind(null, ignore) || generateLongName.bind(null, ignore);
   const defaultPlugins = [Core.values, Core.localByDefault, Core.extractImports, Core.scope];
   const pluginsBefore = before.concat(defaultPlugins);
   const plugins = pluginsBefore.concat(after);
@@ -75,13 +89,18 @@ export default function cssModule(options = {}) {
   }
 
   function importResolver(file) {
+    let exportTokens;
     const relativeFilePath = file.split('"').join('');
     const absoluteFilePath = path.join(process.cwd(), relativeFilePath);
     return getContentsOfFile(relativeFilePath)
       .then((contents) => loadCss(contents, absoluteFilePath))
-      .then(result => {
-        importedCss[absoluteFilePath] = result.injectableSource;
-        return result.exportTokens;
+      .then((result) => {
+        exportTokens = result.exportTokens;
+        return postcssForceAfter(result.injectableSource, afterForced);
+      })
+      .then((result) => {
+        importedCss[absoluteFilePath] = result;
+        return exportTokens;
       });
   }
 
@@ -95,17 +114,22 @@ export default function cssModule(options = {}) {
   }
 
   function transform(code, id) {
+    let exportTokens;
     if (!filter(id)) return null;
     if (extensions.indexOf(path.extname(id)) === -1) return null;
     return loadCss(code, id)
       .then(result => {
+        exportTokens = result.exportTokens;
+        return postcssForceAfter(result.injectableSource, afterForced);
+      })
+      .then(result => {
         if (globals.indexOf(id) > -1) {
-          globalCss[id] = result.injectableSource;
+          globalCss[id] = result;
         } else {
-          localCss[id] = result.injectableSource;
+          localCss[id] = result;
         }
         return {
-          code: `export default ${JSON.stringify(result.exportTokens)};`,
+          code: `export default ${JSON.stringify(exportTokens)};`,
         };
       });
   }

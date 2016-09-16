@@ -41,7 +41,6 @@ function getContentsOfFile(filePath) {
 function generateDependableShortName(name, filename) {
   var sanitisedPath = filename.replace(process.cwd(), '').replace(/\.[^\.\/\\]+$/, '').replace(/[\W_]+/g, '_').replace(/^_|_$/g, '');
   var hash = stringHash('' + sanitisedPath + name).toString(36).substr(0, 5);
-  console.log('_' + hash);
   return '_' + hash;
 }
 

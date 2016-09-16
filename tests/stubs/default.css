@@ -15,3 +15,7 @@
 .margin {
   composes: marginUtils from 'tests/stubs/utils.css';
 }
+
+.ignoreThisClass {
+  color: blue;
+}

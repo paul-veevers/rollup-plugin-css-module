@@ -13,16 +13,20 @@ export function buildDefault() {
     entry: './tests/stubs/default.js',
     plugins: [
       css({
+        generateScopedName: generateDependableShortName,
+        ignore: ['ignoreThisClass'],
         before: [
           require('postcss-nested'),
         ],
         after: [
           require('cssnano'),
         ],
+        afterForced: [
+          scopify('#scopeMe', 'ignoreThisClass'),
+        ],
         globals: [
           './tests/stubs/default.css',
         ],
-        generateScopedName: generateDependableShortName,
       }),
       babel(babelOpts),
     ],
@@ -33,3 +37,14 @@ export function buildDefault() {
     return result.code;
   })
 };
+
+function scopify(scope, ignore) {
+  return function(root) {
+    root.walkRules(function (rule) {
+      if (rule.selector.indexOf('.') === 0 && rule.selector.indexOf(ignore) === -1) {
+        rule.selector = scope + ' ' + rule.selector;
+      }
+      return rule;
+    });
+  };
+}

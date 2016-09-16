@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "css-modules-loader-core": "^1.0.0",
+    "postcss": "^5.2.0",
     "rollup": "^0.29.1",
     "rollup-pluginutils": "^1.2.0",
     "string-hash": "^1.1.0"
