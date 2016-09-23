@@ -8,6 +8,7 @@ var fs = _interopDefault(require('fs'));
 var path = _interopDefault(require('path'));
 var rollupPluginutils = require('rollup-pluginutils');
 var Core = _interopDefault(require('css-modules-loader-core'));
+var postcss = _interopDefault(require('postcss'));
 var stringHash = _interopDefault(require('string-hash'));
 
 // Credit: https://github.com/substack/insert-css/blob/master/index.js
@@ -38,20 +39,31 @@ function getContentsOfFile(filePath) {
   });
 }
 
-function generateDependableShortName(name, filename) {
+function postcssForceAfter(css, plugins) {
+  if (plugins.length === 0) return css;
+  return postcss(plugins).process(css).then(function (result) {
+    return result.css;
+  });
+}
+
+function generateDependableShortName(ignore, name, filename) {
+  console.log('ignore', ignore, name);
+  if (ignore.indexOf(name) > -1) return name;
   var sanitisedPath = filename.replace(process.cwd(), '').replace(/\.[^\.\/\\]+$/, '').replace(/[\W_]+/g, '_').replace(/^_|_$/g, '');
   var hash = stringHash('' + sanitisedPath + name).toString(36).substr(0, 5);
   return '_' + hash;
 }
 
-function generateShortName(name, filename, css) {
+function generateShortName(ignore, name, filename, css) {
+  if (ignore.indexOf(name) > -1) return name;
   var i = css.indexOf('.' + name);
   var numLines = css.substr(0, i).split(/[\r\n]/).length;
   var hash = stringHash(css).toString(36).substr(0, 5);
   return '_' + name + '_' + hash + '_' + numLines;
 }
 
-function generateLongName(name, filename) {
+function generateLongName(ignore, name, filename) {
+  if (ignore.indexOf(name) > -1) return name;
   var sanitisedPath = filename.replace(process.cwd(), '').replace(/\.[^\.\/\\]+$/, '').replace(/[\W_]+/g, '_').replace(/^_|_$/g, '');
   return '_' + sanitisedPath + '__' + name;
 }
@@ -64,6 +76,8 @@ function cssModule() {
   var extensions = options.extensions || ['.css'];
   var before = options.before || [];
   var after = options.after || [];
+  var afterForced = options.afterForced || [];
+  var ignore = options.ignore || [];
   var globals = options.globals || [];
 
   if (globals.length > 0) {
@@ -78,7 +92,7 @@ function cssModule() {
   var localCss = {};
 
   // setup core
-  Core.scope.generateScopedName = options.generateScopedName || generateLongName;
+  Core.scope.generateScopedName = options.generateScopedName.bind(null, ignore) || generateLongName.bind(null, ignore);
   var defaultPlugins = [Core.values, Core.localByDefault, Core.extractImports, Core.scope];
   var pluginsBefore = before.concat(defaultPlugins);
   var plugins = pluginsBefore.concat(after);
@@ -89,13 +103,17 @@ function cssModule() {
   }
 
   function importResolver(file) {
+    var exportTokens = void 0;
     var relativeFilePath = file.split('"').join('');
     var absoluteFilePath = path.join(process.cwd(), relativeFilePath);
     return getContentsOfFile(relativeFilePath).then(function (contents) {
       return loadCss(contents, absoluteFilePath);
     }).then(function (result) {
-      importedCss[absoluteFilePath] = result.injectableSource;
-      return result.exportTokens;
+      exportTokens = result.exportTokens;
+      return postcssForceAfter(result.injectableSource, afterForced);
+    }).then(function (result) {
+      importedCss[absoluteFilePath] = result;
+      return exportTokens;
     });
   }
 
@@ -115,16 +133,20 @@ function cssModule() {
   }
 
   function transform(code, id) {
+    var exportTokens = void 0;
     if (!filter(id)) return null;
     if (extensions.indexOf(path.extname(id)) === -1) return null;
     return loadCss(code, id).then(function (result) {
+      exportTokens = result.exportTokens;
+      return postcssForceAfter(result.injectableSource, afterForced);
+    }).then(function (result) {
       if (globals.indexOf(id) > -1) {
-        globalCss[id] = result.injectableSource;
+        globalCss[id] = result;
       } else {
-        localCss[id] = result.injectableSource;
+        localCss[id] = result;
       }
       return {
-        code: 'export default ' + JSON.stringify(result.exportTokens) + ';'
+        code: 'export default ' + JSON.stringify(exportTokens) + ';'
       };
     });
   }

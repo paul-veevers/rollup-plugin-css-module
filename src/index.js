@@ -31,7 +31,6 @@ function postcssForceAfter(css, plugins) {
 }
 
 export function generateDependableShortName(ignore, name, filename) {
-  console.log('ignore', ignore, name);
   if (ignore.indexOf(name) > -1) return name;
   const sanitisedPath = filename.replace(process.cwd(), '')
     .replace(/\.[^\.\/\\]+$/, '')
