@@ -20,15 +20,14 @@ export function iife(css, className) {
 
 export function cssModule(cssModuleReplaceString, className, insertStyle) {
   function init() {
-    return `
-      var css = '${cssModuleReplaceString}';
+    insert(css, `${className}`); // eslint-disable-line no-undef
+  }
 
-      ${insert.toString()}
-
-      export function init() {
-        insert(css, '${className}');
-      }
-    `;
+  function terminate() {
+    const elems = document.getElementsByClassName(`${className}`);
+    Array.prototype.forEach.call(elems, elem => {
+      elem.parentNode.removeChild(elem);
+    });
   }
 
   if (insertStyle === 'iife') {
@@ -36,12 +35,17 @@ export function cssModule(cssModuleReplaceString, className, insertStyle) {
       export function init() {
         throw Error('css-module has no init method when opts.insertStyle === iife.');
       }
+      export ${terminate.toString()}
     `;
   }
 
   if (insertStyle === 'init') {
     return `
-      ${init()}
+      var css = '${cssModuleReplaceString}';
+      var className = '${className}';
+      ${insert.toString()}
+      export ${init.toString()}
+      export ${terminate.toString()}
     `;
   }
 

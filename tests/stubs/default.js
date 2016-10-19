@@ -12,4 +12,5 @@ const a = function () {
 };
 
 css.init();
+css.terminate();
 a();
