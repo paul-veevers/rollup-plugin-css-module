@@ -21,7 +21,7 @@ export function iife(css, className) {
 export function cssModule(cssModuleReplaceString, className, insertStyle) {
   function init() {
     return `
-      var css = ${cssModuleReplaceString};
+      var css = '${cssModuleReplaceString}';
 
       ${insert.toString()}
 

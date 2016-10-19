@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+  </head>
+  <body id="scopeMe">
+    <p class="_7zcdw">This is an example client's website.</p>
+    <script>  
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (factory());
+}(this, function () { 'use strict';
+
+  (function insert(css, className) {
+    var styleElement = document.createElement('style');
+    styleElement.className = className;
+    styleElement.setAttribute('type', 'text/css');
+    document.querySelector('head').appendChild(styleElement);
+    if (styleElement.styleSheet) {
+      styleElement.styleSheet.cssText = css;
+    } else {
+      styleElement.textContent = css;
+    }
+  })("#scopeMe ._7zcdw{border-color:#bf4040;color:'#fff';background-color:\"#000\"}#scopeMe ._qaw47{color:#1f4f7f}.ignoreThisClass{color:blue}#scopeMe ._1bwdr{margin:15px}", 'css-module');
+    
+  var styles = {"primary":"#bf4040","secondary":"#1f4f7f","button":"_7zcdw","headingColor":"_qaw47","redHeading":"_6xi3w _qaw47","margin":"_16y9d _1bwdr","ignoreThisClass":"ignoreThisClass"};
+
+  function init() {
+    throw Error('css-module has no init method when opts.insertStyle === iife.');
+  }
+
+  var a = function a() {
+    var button = document.createElement('button');
+    button.className = styles.button;
+    document.body.appendChild(button);
+
+    var div = document.createElement('div');
+    div.className = styles.margin;
+    document.body.appendChild(div);
+  };
+
+  init();
+  a();
+
+}));
+    </script>
+  </body>
+</html>

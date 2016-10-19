@@ -192,7 +192,7 @@ function cssModule() {
   }
 
   function transformBundle(source) {
-    return source.replace(cssModuleReplaceString, '\'' + generateCss() + '\'');
+    return source.replace(cssModuleReplaceString, '"' + generateCss() + '"');
   }
 
   return {

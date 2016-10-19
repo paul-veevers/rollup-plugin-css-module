@@ -7,11 +7,12 @@ import { createFilter } from 'rollup-pluginutils';
 import Core from 'css-modules-loader-core';
 import postcss from 'postcss';
 import stringHash from 'string-hash';
+// import stringEscape from 'js-string-escape';
+// import cssEscape from 'css.escape';
 import * as genCode from './gen-code.js';
 
 function compileIife(css, className) {
-  const stringifiedCss = JSON.stringify(css);
-  return genCode.iife(stringifiedCss, className);
+  return genCode.iife(css, className);
 }
 
 function getContentsOfFile(filePath) {
@@ -71,7 +72,8 @@ export default function cssModule(options = {}) {
   let globals = options.globals || [];
 
   // private
-  const cssModuleReplaceString = `'{{css-module-${Date.now()}}}'`;
+  // hopefully unique to everyone's js files
+  const cssModuleReplaceString = `{{css-module-${Date.now()}}}`;
 
   if (globals.length > 0) {
     globals = globals.map((global) => path.join(process.cwd(), global));
@@ -113,7 +115,7 @@ export default function cssModule(options = {}) {
     const globalReduced = Object.keys(globalCss).reduce((acc, key) => acc + globalCss[key], '');
     const importedReduced = Object.keys(importedCss).reduce((acc, key) => acc + importedCss[key], '');
     const localReduced = Object.keys(localCss).reduce((acc, key) => acc + localCss[key], '');
-    return globalReduced + importedReduced + localReduced;
+    return JSON.stringify(globalReduced + importedReduced + localReduced);
   }
 
   // rollup plugin exports
@@ -155,7 +157,7 @@ export default function cssModule(options = {}) {
   }
 
   function transformBundle(source) {
-    return source.replace(cssModuleReplaceString, `"${generateCss()}"`);
+    return source.replace(`'${cssModuleReplaceString}'`, generateCss());
   }
 
   return {
