@@ -7,11 +7,11 @@ import { createFilter } from 'rollup-pluginutils';
 import Core from 'css-modules-loader-core';
 import postcss from 'postcss';
 import stringHash from 'string-hash';
-import insertCss from './insert-css.js';
+import * as genCode from './gen-code.js';
 
-function compile(css) {
+function compileIife(css, className) {
   const stringifiedCss = JSON.stringify(css);
-  return `(${insertCss.toString()})(${stringifiedCss});`;
+  return genCode.iife(stringifiedCss, className);
 }
 
 function getContentsOfFile(filePath) {
@@ -61,11 +61,17 @@ export default function cssModule(options = {}) {
   // options
   const filter = createFilter(options.include, options.exclude);
   const extensions = options.extensions || ['.css'];
+  const moduleId = options.moduleId || 'css-module';
+  const insertStyle = options.insertStyle || 'iife'; // on of: iife, init
+  const insertedClassName = options.insertedClassName || 'css-module';
   const before = options.before || [];
   const after = options.after || [];
   const afterForced = options.afterForced || [];
   const ignore = options.ignore || [];
   let globals = options.globals || [];
+
+  // private
+  const cssModuleReplaceString = `'{{css-module-${Date.now()}}}'`;
 
   if (globals.length > 0) {
     globals = globals.map((global) => path.join(process.cwd(), global));
@@ -103,13 +109,28 @@ export default function cssModule(options = {}) {
       });
   }
 
-  // rollup plugin exports
-  function intro() {
+  function generateCss() {
     const globalReduced = Object.keys(globalCss).reduce((acc, key) => acc + globalCss[key], '');
     const importedReduced = Object.keys(importedCss).reduce((acc, key) => acc + importedCss[key], '');
     const localReduced = Object.keys(localCss).reduce((acc, key) => acc + localCss[key], '');
-    const concatenated = globalReduced + importedReduced + localReduced;
-    return compile(concatenated);
+    return globalReduced + importedReduced + localReduced;
+  }
+
+  // rollup plugin exports
+  function load(id) {
+    if (id === moduleId) return genCode.cssModule(cssModuleReplaceString, insertedClassName, insertStyle);
+    return null;
+  }
+
+  function resolveId(imported) {
+    // so that no other plugin resolves it for us
+    if (imported === moduleId) return moduleId;
+    return null;
+  }
+
+  function intro() {
+    if (insertStyle === 'iife') return compileIife(generateCss(), insertedClassName);
+    return null;
   }
 
   function transform(code, id) {
@@ -133,9 +154,16 @@ export default function cssModule(options = {}) {
       });
   }
 
+  function transformBundle(source) {
+    return source.replace(cssModuleReplaceString, `'${generateCss()}'`);
+  }
+
   return {
     name: 'rollup-plugin-css-module',
+    load,
+    resolveId,
     intro,
     transform,
+    transformBundle,
   };
 }

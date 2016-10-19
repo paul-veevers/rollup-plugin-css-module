@@ -6,3 +6,9 @@ test('test default build', async t => {
   console.log(data);
   t.true(true);
 });
+
+test('test build with init insertStyle', async t => {
+  const data = await buildDefault('init').catch(err => console.log(err.stack));
+  console.log(data);
+  t.true(true);
+});

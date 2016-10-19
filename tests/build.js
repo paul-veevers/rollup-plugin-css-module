@@ -8,11 +8,12 @@ const babelOpts = {
   exclude: ['**/*.css'],
 };
 
-export function buildDefault() {
+export function buildDefault(insertStyle = 'iife') {
   return rollup.rollup({
     entry: './tests/stubs/default.js',
     plugins: [
       css({
+        insertStyle,
         generateScopedName: generateDependableShortName,
         ignore: ['ignoreThisClass'],
         before: [

@@ -1,4 +1,5 @@
 import styles from './default.css';
+import * as css from 'css-module';
 
 const a = function () {
   const button = document.createElement('button');
@@ -10,4 +11,5 @@ const a = function () {
   document.body.appendChild(div);
 };
 
+css.init();
 a();

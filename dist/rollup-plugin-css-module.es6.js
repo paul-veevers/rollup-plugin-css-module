@@ -41,7 +41,6 @@ function postcssForceAfter(css, plugins) {
 }
 
 function generateDependableShortName(ignore, name, filename) {
-  console.log('ignore', ignore, name);
   if (ignore.indexOf(name) > -1) return name;
   var sanitisedPath = filename.replace(process.cwd(), '').replace(/\.[^\.\/\\]+$/, '').replace(/[\W_]+/g, '_').replace(/^_|_$/g, '');
   var hash = stringHash('' + sanitisedPath + name).toString(36).substr(0, 5);
