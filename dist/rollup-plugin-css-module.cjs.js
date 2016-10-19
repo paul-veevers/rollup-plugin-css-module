@@ -31,15 +31,35 @@ function iife(css, className) {
 
 function cssModule$1(cssModuleReplaceString, className, insertStyle) {
   function init() {
-    return '\n      var css = \'' + cssModuleReplaceString + '\';\n\n      ' + insert.toString() + '\n\n      export function init() {\n        insert(css, \'' + className + '\');\n      }\n    ';
+    insert(css, '' + className); // eslint-disable-line no-undef
+  }
+
+  function terminate() {
+    var elems = document.getElementsByClassName('' + className);
+    Array.prototype.forEach.call(elems, function (elem) {
+      elem.parentNode.removeChild(elem);
+    });
+  }
+
+  function getCSS(selector) {
+    var elem = document.getElementsByClassName('' + className);
+    if (!elem || !elem[0] || !elem[0].sheet) return null;
+    var selectors = elem[0].sheet.rules || elem[0].sheet.cssRules;
+    return Array.prototype.reduce.call(selectors, function (acc, item) {
+      if (item.selectorText.indexOf(selector) > -1) {
+        if (item.cssText) return acc + item.cssText;
+        return acc + item.style.cssText;
+      }
+      return acc;
+    }, '');
   }
 
   if (insertStyle === 'iife') {
-    return '\n      export function init() {\n        throw Error(\'css-module has no init method when opts.insertStyle === iife.\');\n      }\n    ';
+    return '\n      var className = \'' + className + '\';\n      export function init() {\n        throw Error(\'css-module has no init method when opts.insertStyle === iife.\');\n      }\n      export ' + terminate.toString() + '\n      export ' + getCSS.toString() + '\n    ';
   }
 
   if (insertStyle === 'init') {
-    return '\n      ' + init() + '\n    ';
+    return '\n      var css = \'' + cssModuleReplaceString + '\';\n      var className = \'' + className + '\';\n      ' + insert.toString() + '\n      export ' + init.toString() + '\n      export ' + terminate.toString() + '\n      export ' + getCSS.toString() + '\n    ';
   }
 
   return '';
