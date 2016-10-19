@@ -31,7 +31,7 @@ function iife(css, className) {
 
 function cssModule$1(cssModuleReplaceString, className, insertStyle) {
   function init() {
-    return '\n      var css = ' + cssModuleReplaceString + ';\n\n      ' + insert.toString() + '\n\n      export function init() {\n        insert(css, \'' + className + '\');\n      }\n    ';
+    return '\n      var css = \'' + cssModuleReplaceString + '\';\n\n      ' + insert.toString() + '\n\n      export function init() {\n        insert(css, \'' + className + '\');\n      }\n    ';
   }
 
   if (insertStyle === 'iife') {
@@ -46,8 +46,7 @@ function cssModule$1(cssModuleReplaceString, className, insertStyle) {
 }
 
 function compileIife(css, className) {
-  var stringifiedCss = JSON.stringify(css);
-  return iife(stringifiedCss, className);
+  return iife(css, className);
 }
 
 function getContentsOfFile(filePath) {
@@ -103,7 +102,8 @@ function cssModule() {
   var globals = options.globals || [];
 
   // private
-  var cssModuleReplaceString = '\'{{css-module-' + Date.now() + '}}\'';
+  // hopefully unique to everyone's js files
+  var cssModuleReplaceString = '{{css-module-' + Date.now() + '}}';
 
   if (globals.length > 0) {
     globals = globals.map(function (global) {
@@ -152,7 +152,7 @@ function cssModule() {
     var localReduced = Object.keys(localCss).reduce(function (acc, key) {
       return acc + localCss[key];
     }, '');
-    return globalReduced + importedReduced + localReduced;
+    return JSON.stringify(globalReduced + importedReduced + localReduced);
   }
 
   // rollup plugin exports
@@ -192,7 +192,7 @@ function cssModule() {
   }
 
   function transformBundle(source) {
-    return source.replace(cssModuleReplaceString, '"' + generateCss() + '"');
+    return source.replace('\'' + cssModuleReplaceString + '\'', generateCss());
   }
 
   return {

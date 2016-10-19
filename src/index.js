@@ -7,8 +7,6 @@ import { createFilter } from 'rollup-pluginutils';
 import Core from 'css-modules-loader-core';
 import postcss from 'postcss';
 import stringHash from 'string-hash';
-// import stringEscape from 'js-string-escape';
-// import cssEscape from 'css.escape';
 import * as genCode from './gen-code.js';
 
 function compileIife(css, className) {
