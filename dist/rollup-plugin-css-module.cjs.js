@@ -13,9 +13,9 @@ var stringHash = _interopDefault(require('string-hash'));
 
 // Credit: https://github.com/substack/insert-css/blob/master/index.js
 // Heavily modified
-
-function insertCss(css) {
+function insert(css, className) {
   var styleElement = document.createElement('style');
+  styleElement.className = className;
   styleElement.setAttribute('type', 'text/css');
   document.querySelector('head').appendChild(styleElement);
   if (styleElement.styleSheet) {
@@ -25,9 +25,29 @@ function insertCss(css) {
   }
 }
 
-function compile(css) {
+function iife(css, className) {
+  return '\n    (' + insert.toString() + ')(' + css + ', \'' + className + '\');\n  ';
+}
+
+function cssModule$1(cssModuleReplaceString, className, insertStyle) {
+  function init() {
+    return '\n      var css = ' + cssModuleReplaceString + ';\n\n      ' + insert.toString() + '\n\n      export function init() {\n        insert(css, \'' + className + '\');\n      }\n    ';
+  }
+
+  if (insertStyle === 'iife') {
+    return '\n      export function init() {\n        throw Error(\'css-module has no init method when opts.insertStyle === iife.\');\n      }\n    ';
+  }
+
+  if (insertStyle === 'init') {
+    return '\n      ' + init() + '\n    ';
+  }
+
+  return '';
+}
+
+function compileIife(css, className) {
   var stringifiedCss = JSON.stringify(css);
-  return '(' + insertCss.toString() + ')(' + stringifiedCss + ');';
+  return iife(stringifiedCss, className);
 }
 
 function getContentsOfFile(filePath) {
@@ -73,11 +93,17 @@ function cssModule() {
   // options
   var filter = rollupPluginutils.createFilter(options.include, options.exclude);
   var extensions = options.extensions || ['.css'];
+  var moduleId = options.moduleId || 'css-module';
+  var insertStyle = options.insertStyle || 'iife'; // on of: iife, init
+  var insertedClassName = options.insertedClassName || 'css-module';
   var before = options.before || [];
   var after = options.after || [];
   var afterForced = options.afterForced || [];
   var ignore = options.ignore || [];
   var globals = options.globals || [];
+
+  // private
+  var cssModuleReplaceString = '\'{{css-module-' + Date.now() + '}}\'';
 
   if (globals.length > 0) {
     globals = globals.map(function (global) {
@@ -116,8 +142,7 @@ function cssModule() {
     });
   }
 
-  // rollup plugin exports
-  function intro() {
+  function generateCss() {
     var globalReduced = Object.keys(globalCss).reduce(function (acc, key) {
       return acc + globalCss[key];
     }, '');
@@ -127,8 +152,24 @@ function cssModule() {
     var localReduced = Object.keys(localCss).reduce(function (acc, key) {
       return acc + localCss[key];
     }, '');
-    var concatenated = globalReduced + importedReduced + localReduced;
-    return compile(concatenated);
+    return globalReduced + importedReduced + localReduced;
+  }
+
+  // rollup plugin exports
+  function load(id) {
+    if (id === moduleId) return cssModule$1(cssModuleReplaceString, insertedClassName, insertStyle);
+    return null;
+  }
+
+  function resolveId(imported) {
+    // so that no other plugin resolves it for us
+    if (imported === moduleId) return moduleId;
+    return null;
+  }
+
+  function intro() {
+    if (insertStyle === 'iife') return compileIife(generateCss(), insertedClassName);
+    return null;
   }
 
   function transform(code, id) {
@@ -150,10 +191,17 @@ function cssModule() {
     });
   }
 
+  function transformBundle(source) {
+    return source.replace(cssModuleReplaceString, '\'' + generateCss() + '\'');
+  }
+
   return {
     name: 'rollup-plugin-css-module',
+    load: load,
+    resolveId: resolveId,
     intro: intro,
-    transform: transform
+    transform: transform,
+    transformBundle: transformBundle
   };
 }
 
