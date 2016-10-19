@@ -30,12 +30,27 @@ export function cssModule(cssModuleReplaceString, className, insertStyle) {
     });
   }
 
+  function getCSS(selector) {
+    const elem = document.getElementsByClassName(`${className}`);
+    if (!elem || !elem[0] || !elem[0].sheet) return null;
+    const selectors = elem[0].sheet.rules || elem[0].sheet.cssRules;
+    return Array.prototype.reduce.call(selectors, (acc, item) => {
+      if (item.selectorText.indexOf(selector) > -1) {
+        if (item.cssText) return acc + item.cssText;
+        return acc + item.style.cssText;
+      }
+      return acc;
+    }, '');
+  }
+
   if (insertStyle === 'iife') {
     return `
+      var className = '${className}';
       export function init() {
         throw Error('css-module has no init method when opts.insertStyle === iife.');
       }
       export ${terminate.toString()}
+      export ${getCSS.toString()}
     `;
   }
 
@@ -46,6 +61,7 @@ export function cssModule(cssModuleReplaceString, className, insertStyle) {
       ${insert.toString()}
       export ${init.toString()}
       export ${terminate.toString()}
+      export ${getCSS.toString()}
     `;
   }
 

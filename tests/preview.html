@@ -26,6 +26,7 @@
     
   var styles = {"primary":"#bf4040","secondary":"#1f4f7f","button":"_7zcdw","headingColor":"_qaw47","redHeading":"_6xi3w _qaw47","margin":"_16y9d _1bwdr","ignoreThisClass":"ignoreThisClass"};
 
+  var className = 'css-module';
   function init() {
     throw Error('css-module has no init method when opts.insertStyle === iife.');
   }
@@ -34,6 +35,33 @@
     Array.prototype.forEach.call(elems, function (elem) {
       elem.parentNode.removeChild(elem);
     });
+  }
+  function getCSS(selector) {
+    var elem = document.getElementsByClassName('' + className);
+    if (!elem || !elem[0] || !elem[0].sheet) return null;
+    var selectors = elem[0].sheet.rules || elem[0].sheet.cssRules;
+    return Array.prototype.reduce.call(selectors, function (acc, item) {
+      var inc = '';
+      if (item.selectorText.indexOf(selector) > -1) {
+        if (item.cssText) {
+          inc = item.cssText;
+        } else {
+          inc = item.style.cssText;
+        }
+      }
+      return acc + inc;
+    }, '');
+    // let acc = '';
+    // for (let i = 0; i < classes.length; i++) {
+    //   if (classes[i].selectorText.indexOf(selector) > -1) {
+    //     if (classes[i].cssText) {
+    //       acc += classes[i].cssText;
+    //     } else {
+    //       acc += classes[i].style.cssText;
+    //     }
+    //   }
+    // }
+    // return acc;
   }
 
   var a = function a() {
@@ -46,9 +74,11 @@
     document.body.appendChild(div);
   };
 
-  init();
+  // prevent tree shaking
+  // init();
+  console.log(getCSS(styles.button));
   // terminate();
-  a();
+  // a();
 
 }));
     </script>

@@ -11,6 +11,8 @@ const a = function () {
   document.body.appendChild(div);
 };
 
+// prevent tree shaking
 css.init();
+console.log(css.getCSS(styles.button));
 css.terminate();
 a();
