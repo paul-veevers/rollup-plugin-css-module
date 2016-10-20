@@ -40,7 +40,7 @@ function cssModule$1(cssModuleReplaceString, className, insertStyle) {
     if (!elem || !elem[0] || !elem[0].sheet) return null;
     var selectors = elem[0].sheet.rules || elem[0].sheet.cssRules;
     return Array.prototype.reduce.call(selectors, function (acc, item) {
-      if (item.selectorText.indexOf(selector) > -1) {
+      if (item.selectorText && item.selectorText.indexOf(selector) > -1) {
         if (item.cssText) return acc + item.cssText;
         return acc + item.style.cssText;
       }
