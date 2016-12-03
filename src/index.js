@@ -1,33 +1,14 @@
 /* eslint-disable no-use-before-define */
 /* eslint-disable max-len */
 
-import fs from 'fs'
 import path from 'path'
 import { createFilter } from 'rollup-pluginutils'
 import Core from 'css-modules-loader-core'
-import postcss from 'postcss'
+import postcssRemoveClasses from 'postcss-remove-classes'
 import stringHash from 'string-hash'
 import * as genCode from './gen-code.js'
-
-function compileIife (css, className) {
-  return genCode.iife(css, className)
-}
-
-function getContentsOfFile (filePath) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filePath, (err, data) => {
-      if (err) return reject(err)
-      return resolve(data)
-    })
-  })
-}
-
-function postcssForceAfter (css, plugins) {
-  if (plugins.length === 0) return css
-  return postcss(plugins)
-    .process(css)
-    .then((result) => result.css)
-}
+import * as config from './config.js'
+import * as utils from './utils.js'
 
 export function generateDependableShortName (ignore, name, filename) {
   if (ignore.indexOf(name) > -1) return name
@@ -61,60 +42,29 @@ export default function cssModule (options = {}) {
   const filter = createFilter(options.include, options.exclude)
   const extensions = options.extensions || ['.css']
   const moduleId = options.moduleId || 'css-module'
-  const insertStyle = options.insertStyle || 'iife' // on of: iife, init
+  const insertStyle = options.insertStyle || 'iife' // one of: iife, init
   const insertedClassName = options.insertedClassName || 'css-module'
   const before = options.before || []
   const after = options.after || []
   const afterForced = options.afterForced || []
   const ignore = options.ignore || []
-  let globals = options.globals || []
+  const treeshake = options.treeshake || config.defaultTreeshakeOpts
+  const suppressNamingWarning = options.suppressNamingWarning || false
+  const globals = (options.globals) ? options.globals.map(utils.absPath) : []
 
   // private
   // hopefully unique to everyone's js files
-  const cssModuleReplaceString = `{{css-module-${Date.now()}}}`
-
-  if (globals.length > 0) {
-    globals = globals.map((global) => path.join(process.cwd(), global))
-  }
-
+  const cssModuleReplaceString = `{{${config.pluginName}-${Math.random() * Date.now()}}}`
   // css accumulators
-  const globalCss = {}
-  const importedCss = {}
-  const localCss = {}
-
+  const accumulators = {
+    global: {},
+    imported: {},
+    local: {}
+  }
   // setup core
   Core.scope.generateScopedName = options.generateScopedName.bind(null, ignore) || generateLongName.bind(null, ignore)
-  const defaultPlugins = [Core.values, Core.localByDefault, Core.extractImports, Core.scope]
-  const pluginsBefore = before.concat(defaultPlugins)
-  const plugins = pluginsBefore.concat(after)
+  const plugins = before.concat([Core.values, Core.localByDefault, Core.extractImports, Core.scope]).concat(after)
   const coreInstance = new Core(plugins)
-
-  function loadCss (code, id) {
-    return coreInstance.load(code, id, null, importResolver)
-  }
-
-  function importResolver (file) {
-    let exportTokens
-    const relativeFilePath = file.split('"').join('')
-    const absoluteFilePath = path.join(process.cwd(), relativeFilePath)
-    return getContentsOfFile(relativeFilePath)
-      .then((contents) => loadCss(contents, absoluteFilePath))
-      .then((result) => {
-        exportTokens = result.exportTokens
-        return postcssForceAfter(result.injectableSource, afterForced)
-      })
-      .then((result) => {
-        importedCss[absoluteFilePath] = result
-        return exportTokens
-      })
-  }
-
-  function generateCss () {
-    const globalReduced = Object.keys(globalCss).reduce((acc, key) => acc + globalCss[key], '')
-    const importedReduced = Object.keys(importedCss).reduce((acc, key) => acc + importedCss[key], '')
-    const localReduced = Object.keys(localCss).reduce((acc, key) => acc + localCss[key], '')
-    return JSON.stringify(globalReduced + importedReduced + localReduced)
-  }
 
   // rollup plugin exports
   function load (id) {
@@ -123,52 +73,54 @@ export default function cssModule (options = {}) {
   }
 
   function resolveId (imported) {
-    // so that no other plugin resolves it for us
+    // so that no other plugin tries to resolve it for us
     if (imported === moduleId) return moduleId
     return null
   }
 
   function intro () {
-    if (insertStyle === 'iife') return compileIife(generateCss(), insertedClassName)
+    if (insertStyle === 'iife') return utils.compileIife(utils.concatCss(accumulators), insertedClassName)
     return null
   }
 
   function transform (code, id) {
-    let exportTokens
     if (!filter(id)) return null
     if (extensions.indexOf(path.extname(id)) === -1) return null
-    return loadCss(code, id)
+    return utils.processCssModule(coreInstance, code, id, accumulators, suppressNamingWarning)
       .then(result => {
-        exportTokens = result.exportTokens
-        return postcssForceAfter(result.injectableSource, afterForced)
-      })
-      .then(result => {
+        result = utils.makeLegitExportTokens(result, suppressNamingWarning)
         if (globals.indexOf(id) > -1) {
-          globalCss[id] = result
+          accumulators.global[id] = result
         } else {
-          localCss[id] = result
+          accumulators.local[id] = result
         }
         return {
-          code: `export default ${JSON.stringify(exportTokens)};`
+          code: Object.keys(result.exportTokens).reduce((acc, key) => {
+            acc += `export var ${key} = '${result.exportTokens[key]}';`
+            return acc
+          }, '')
         }
       })
   }
 
   function transformBundle (source) {
-    return source.replace(`'${cssModuleReplaceString}'`, generateCss())
-  }
-
-  function ongenerate () {
-    console.log('ongenerate', arguments); // eslint-disable-line
+    if (treeshake.remove || treeshake.error || treeshake.warn) {
+      const unusedArr = utils.getUnusedCss(source, accumulators)
+      if (unusedArr.length > 0) {
+        utils.logUnused(unusedArr, treeshake)
+        afterForced.push(postcssRemoveClasses(unusedArr))
+      }
+    }
+    const p = utils.postcssForceAfter(utils.concatCss(accumulators), afterForced)
+    return source.replace(`'${cssModuleReplaceString}'`, JSON.stringify(p))
   }
 
   return {
-    name: 'rollup-plugin-css-module',
+    name: config.pluginName,
     load,
     resolveId,
     intro,
     transform,
-    transformBundle,
-    ongenerate
+    transformBundle
   }
 }

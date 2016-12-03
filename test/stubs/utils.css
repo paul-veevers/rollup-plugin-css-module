@@ -1,0 +1,10 @@
+@value primary: #BF4040;
+@value secondary: #1F4F7F;
+
+.marginUtils {
+  margin: 15px;
+}
+
+.unusedImportedClass {
+  color: blue;
+}

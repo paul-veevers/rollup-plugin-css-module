@@ -1,0 +1,26 @@
+@value primary, secondary from "stubs/utils.css";
+
+.button {
+  border-color: primary;
+  font-family: "noto-sans", Helvetica, Arial, sans-serif;
+}
+
+.headingColor {
+  color: secondary;
+}
+
+.redHeading {
+  composes: headingColor;
+}
+
+.margin {
+  composes: marginUtils from 'stubs/utils.css';
+}
+
+.doNotMangleMe {
+  color: blue;
+}
+
+.unusedLocalClass {
+  color: red;
+}

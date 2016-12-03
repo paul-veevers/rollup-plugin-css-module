@@ -27,25 +27,28 @@
     "css module",
     "postcss"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "colors": "^1.1.2",
+    "css-modules-loader-core": "^1.0.0",
+    "postcss": "^5.2.0",
+    "postcss-remove-classes": "^1.0.2",
+    "rollup": "^0.36.4",
+    "rollup-pluginutils": "^1.2.0",
+    "string-hash": "^1.1.0"
+  },
   "devDependencies": {
     "ava": "^0.15.1",
     "babel-preset-es2015-rollup": "^1.1.1",
     "babel-preset-stage-1": "^6.5.0",
     "babel-register": "^6.9.0",
-    "css-modules-loader-core": "^1.0.0",
+    "bootstrap": "^3.3.7",
     "cssnano": "^3.7.4",
     "eslint": "^3.11.1",
     "jsdom": "^9.2.1",
     "nyc": "^10.0.0",
-    "postcss": "^5.2.0",
     "postcss-nested": "^1.0.0",
-    "require-from-string": "^1.1.0",
-    "rollup": "^0.29.1",
     "rollup-plugin-babel": "^2.4.0",
-    "rollup-pluginutils": "^1.2.0",
-    "standard": "^8.6.0",
-    "string-hash": "^1.1.0"
+    "standard": "^8.6.0"
   },
   "babel": {
     "presets": [
