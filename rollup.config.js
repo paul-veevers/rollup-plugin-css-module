@@ -1,25 +1,26 @@
 import babel from 'rollup-plugin-babel';
+import pkg from './package.json';
 
-var external = Object.keys( require( './package.json' ).dependencies );
+const external = Object.keys(pkg.dependencies);
 
 export default {
-	entry: 'src/index.js',
+  entry: 'src/index.js',
   targets: [
     {
       dest: 'dist/rollup-plugin-css-module.cjs.js',
-      format: 'cjs'
+      format: 'cjs',
     },
     {
       dest: 'dist/rollup-plugin-css-module.es6.js',
-      format: 'es6'
-    } 
+      format: 'es6',
+    },
   ],
-  external: external,
-	plugins: [
+  external,
+  plugins: [
     babel({
       exclude: 'node_modules/**',
       presets: ['es2015-rollup'],
-      babelrc: false
-    })
+      babelrc: false,
+    }),
   ],
 };

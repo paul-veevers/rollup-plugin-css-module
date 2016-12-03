@@ -1,5 +1,7 @@
-import rollup from 'rollup';
+import { rollup } from 'rollup';
 import babel from 'rollup-plugin-babel';
+import postcssNested from 'postcss-nested';
+import cssnano from 'cssnano';
 import css, { generateDependableShortName } from '../src/index.js';
 
 const babelOpts = {
@@ -8,8 +10,19 @@ const babelOpts = {
   exclude: ['**/*.css'],
 };
 
-export function buildDefault(insertStyle = 'iife') {
-  return rollup.rollup({
+function scopify(scope, ignore) {
+  return function s(root) {
+    root.walkRules(rule => {
+      if (rule.selector.indexOf('.') === 0 && rule.selector.indexOf(ignore) === -1) {
+        rule.selector = `${scope} ${rule.selector}`; // eslint-disable-line no-param-reassign
+      }
+      return rule;
+    });
+  };
+}
+
+export default function build(insertStyle = 'iife') {
+  return rollup({
     entry: './tests/stubs/default.js',
     plugins: [
       css({
@@ -17,10 +30,10 @@ export function buildDefault(insertStyle = 'iife') {
         generateScopedName: generateDependableShortName,
         ignore: ['ignoreThisClass'],
         before: [
-          require('postcss-nested'),
+          postcssNested,
         ],
         after: [
-          require('cssnano'),
+          cssnano,
         ],
         afterForced: [
           scopify('#scopeMe', 'ignoreThisClass'),
@@ -36,16 +49,5 @@ export function buildDefault(insertStyle = 'iife') {
       format: 'umd',
     });
     return result.code;
-  })
-};
-
-function scopify(scope, ignore) {
-  return function(root) {
-    root.walkRules(function (rule) {
-      if (rule.selector.indexOf('.') === 0 && rule.selector.indexOf(ignore) === -1) {
-        rule.selector = scope + ' ' + rule.selector;
-      }
-      return rule;
-    });
-  };
+  });
 }

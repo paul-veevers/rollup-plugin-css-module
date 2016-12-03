@@ -158,6 +158,10 @@ export default function cssModule(options = {}) {
     return source.replace(`'${cssModuleReplaceString}'`, generateCss());
   }
 
+  function ongenerate() {
+    console.log('ongenerate', arguments); // eslint-disable-line
+  }
+
   return {
     name: 'rollup-plugin-css-module',
     load,
@@ -165,5 +169,6 @@ export default function cssModule(options = {}) {
     intro,
     transform,
     transformBundle,
+    ongenerate,
   };
 }
