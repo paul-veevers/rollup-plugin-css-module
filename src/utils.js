@@ -5,8 +5,15 @@ import colors from 'colors'
 import * as genCode from './gen-code.js'
 import * as config from './config.js'
 
-export function absPath (relativePath) {
-  return path.join(process.cwd(), relativePath)
+export function log (id, ctx = {}) {
+  const c = Object.keys(ctx).reduce((acc, key) => acc.replace(`{{${key}}}`, colors.red(ctx[key])), config.logErrs[id])
+  const msg = colors.yellow(`${colors.white(config.pluginName)} ${c}`)
+  console.log(msg)
+  return msg
+}
+
+export function absPath (relPath) {
+  return path.join(process.cwd(), relPath)
 }
 
 export function getContentsOfFile (filePath) {
@@ -34,9 +41,7 @@ export function makeLegitExportTokens (result, shouldNotWarn) {
     str = str
       .replace(/-(.{1})/gi, (a, b) => (b.toUpperCase) ? b.toUpperCase() : b) // camelCase dashes (-)
       .replace('\'', '') // replace quotes, postcss adds to vars with a -
-    if (!shouldNotWarn && str !== key) {
-      console.log(colors.yellow(`${colors.white(config.pluginName)} NamingWarning: export name ${colors.red(str)} has been changed to ${colors.red(str)}. Either because it's a Javascript reserved word or it has a '-' in it. To turn off this warning set suppressNamingWarning: true`))
-    }
+    if (!shouldNotWarn && str !== key) log('namingWarn', { oldName: key, newName: str })
     acc.exportTokens[str] = result.exportTokens[key]
     return acc
   }, {
@@ -86,11 +91,7 @@ export function getUnusedCss (source, accumulators) {
 
 export function logUnused (unused, opts) {
   if (opts.error === true || opts.warning === true) {
-    unused.map(e => console.log(colors.yellow(`${colors.white(config.pluginName)} export name ${colors.red(e.export)} is not used (${e.file})`)))
-    if (opts.error === true) {
-      const msg = `${colors.white(config.pluginName)} Stopping build due to unused css exports. If you would like to continue build in future set treeshake.error: false`
-      console.log(msg)
-      throw Error(msg)
-    }
+    unused.map(e => log('unusedWarn', e))
+    if (opts.error === true) throw Error(log('unusedErr'))
   }
 }

@@ -1,6 +1,3 @@
-/* eslint-disable no-use-before-define */
-/* eslint-disable max-len */
-
 import path from 'path'
 import { createFilter } from 'rollup-pluginutils'
 import Core from 'css-modules-loader-core'
