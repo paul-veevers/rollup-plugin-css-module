@@ -10,16 +10,16 @@
     "README"
   ],
   "author": {
-    "email": "paul@elev.io",
+    "email": "veevers.paul@gmail.com",
     "name": "Paul Veevers"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/elevio/rollup-plugin-css-module.git"
+    "url": "git+https://github.com/paul-veevers/rollup-plugin-css-module.git"
   },
-  "homepage": "https://github.com/elevio/rollup-plugin-css-module#readme",
+  "homepage": "https://github.com/paul-veevers/rollup-plugin-css-module#readme",
   "bugs": {
-    "url": "https://github.com/elevio/rollup-plugin-css-module/issues"
+    "url": "https://github.com/paul-veevers/rollup-plugin-css-module/issues"
   },
   "keywords": [
     "rollup",
