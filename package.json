@@ -1,7 +1,7 @@
 {
   "name": "rollup-plugin-css-module",
   "description": "Rollup plugin for CSS modules",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "license": "MIT",
   "main": "dist/rollup-plugin-css-module.cjs.js",
   "jsnext:main": "dist/rollup-plugin-css-module.es6.js",
@@ -63,22 +63,25 @@
     "lines": 90,
     "statements": 90,
     "functions": 90,
-    "branches": 90,
-    "check-coverage": true
+    "branches": 70,
+    "check-coverage": true,
+    "reporter": [
+      "lcov",
+      "text-summary"
+    ]
   },
   "ava": {
     "files": [
       "./test/test.js"
     ],
     "require": [
-      "./test/helpers/set-browser-env.js",
       "babel-register"
     ]
   },
   "scripts": {
     "test": "standard && nyc ava",
-    "prebuild": "npm run test && rm -rf dist/*",
-    "build": "rollup -c",
+    "prebuild": "npm run test && rm -rf dist",
+    "build": "rollup -c && cp src/css-module.js dist",
     "prepublish": "npm run build"
   }
 }

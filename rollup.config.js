@@ -1,5 +1,4 @@
 import babel from 'rollup-plugin-babel'
-import pkg from './package.json'
 
 export default {
   entry: 'src/index.js',
@@ -10,10 +9,14 @@ export default {
     },
     {
       dest: 'dist/rollup-plugin-css-module.es6.js',
-      format: 'es6'
+      format: 'es'
     }
   ],
-  external: Object.keys(pkg.dependencies),
+  exports: 'named',
+  external: [
+    'fs',
+    'path'
+  ].concat(Object.keys(require('./package.json').dependencies)),
   plugins: [
     babel({
       exclude: 'node_modules/**',

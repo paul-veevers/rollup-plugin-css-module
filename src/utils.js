@@ -2,7 +2,6 @@ import fs from 'fs'
 import path from 'path'
 import postcss from 'postcss'
 import colors from 'colors'
-import * as genCode from './gen-code.js'
 import * as config from './config.js'
 
 export function log (id, ctx = {}) {
@@ -25,8 +24,9 @@ export function getContentsOfFile (filePath) {
   })
 }
 
-export function compileIife (css, className) {
-  return genCode.iife(css, className)
+export function stringify (css) {
+  const a = JSON.stringify(css)
+  return a.substr(1, a.length - 2)
 }
 
 export function postcssForceAfter (css, plugins) {
@@ -50,19 +50,21 @@ export function makeLegitExportTokens (result, shouldNotWarn) {
   })
 }
 
-export function processCssModule (instance, code, id, accumulators, suppressNamingWarning) {
-  function importResolver (file) {
-    const relativePath = file.split('"').join('')
-    const absolutePath = absPath(relativePath)
-    return getContentsOfFile(relativePath)
-      .then(contents => processCssModule(instance, contents, absolutePath, accumulators))
-      .then(result => {
-        result = makeLegitExportTokens(result, suppressNamingWarning)
-        accumulators.imported[absolutePath] = result
-        return result.exportTokens
+export function processCssModule (instance, code, id, shouldNotWarn, imported = {}) {
+  return instance.load(code, id, null, file => {
+    const rPath = file.split('"').join('')
+    const aPath = absPath(rPath)
+    return getContentsOfFile(rPath)
+      .then(c => processCssModule(instance, c, aPath, shouldNotWarn, imported))
+      .then(r => {
+        imported[aPath] = r.local
+        return r.local.exportTokens
       })
-  }
-  return instance.load(code, id, null, importResolver)
+  })
+    .then(r => ({
+      local: makeLegitExportTokens(r, shouldNotWarn),
+      imported
+    }))
 }
 
 export function concatCss (accumulators) {

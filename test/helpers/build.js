@@ -2,21 +2,27 @@ import { rollup } from 'rollup'
 import babel from 'rollup-plugin-babel'
 import postcssNested from 'postcss-nested'
 import cssnano from 'cssnano'
-import css, { generateDependableShortName } from '../../src/index.js'
+import css, {
+  generateDependableShortName,
+  generateShortName,
+  generateLongName
+} from '../../src/index.js'
 
+const scopeTypes = [generateLongName, generateShortName, generateDependableShortName]
 const babelOpts = {
   babelrc: false,
   presets: ['es2015-rollup'],
   exclude: ['**/*.css']
 }
 
-export default function build (insertStyle = 'iife') {
+export default function build (insertMethod = 'iife', entry = './stubs/default.js', scopeName = 0, logging = false, treeshake = true) {
   return rollup({
-    entry: './stubs/default.js',
+    entry,
     plugins: [
       css({
-        insertStyle,
-        generateScopedName: generateDependableShortName,
+        insertMethod,
+        fileName: './tmp/fileName.css',
+        generateScopedName: scopeTypes[scopeName],
         ignore: ['doNotMangleMe'],
         before: [
           postcssNested
@@ -29,17 +35,17 @@ export default function build (insertStyle = 'iife') {
           './stubs/global.css'
         ],
         treeshake: {
-          warning: false,
-          error: false,
-          remove: true
+          warning: logging,
+          error: logging,
+          remove: treeshake
         },
-        suppressNamingWarning: true
+        suppressNamingWarning: !logging
       }),
       babel(babelOpts)
     ]
   }).then(bundle => {
     return bundle.generate({
-      format: 'umd'
+      format: 'iife'
     }).code
   })
 }

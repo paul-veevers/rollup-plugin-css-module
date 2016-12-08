@@ -1,6 +1,5 @@
 import * as globalStyles from './global.css'
 import * as localStyles from './local.css'
-// import * as bootstrap from '../../node_modules/bootstrap/dist/css/bootstrap.css'
 
 function a () {
   const button = document.createElement('button')

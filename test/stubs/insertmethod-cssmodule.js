@@ -1,6 +1,6 @@
+import * as css from '../../src/css-module.js'
 import * as globalStyles from './global.css'
 import * as localStyles from './local.css'
-// import * as bootstrap from '../../node_modules/bootstrap/dist/css/bootstrap.css'
 
 function a () {
   const button = document.createElement('button')
@@ -21,4 +21,6 @@ function a () {
 }
 
 // prevent tree shaking
+css.init()
+css.terminate()
 a()

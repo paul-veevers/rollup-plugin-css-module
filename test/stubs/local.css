@@ -24,3 +24,13 @@
 .unusedLocalClass {
   color: red;
 }
+
+/* reserved javascript word */
+.catch {
+  color: purple;
+}
+
+/* illegal dashes */
+.dash-dash-dash {
+  color: purple;
+}
