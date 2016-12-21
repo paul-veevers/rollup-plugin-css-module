@@ -1,7 +1,7 @@
 {
   "name": "rollup-plugin-css-module",
   "description": "Rollup plugin for CSS modules",
-  "version": "0.0.19",
+  "version": "0.0.20",
   "license": "MIT",
   "main": "dist/rollup-plugin-css-module.cjs.js",
   "jsnext:main": "dist/rollup-plugin-css-module.es6.js",
