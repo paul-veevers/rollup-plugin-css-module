@@ -1,7 +1,9 @@
 node_modules
 npm-debug.log
 .DS_Store
-dist
 coverage
 .nyc_output
 test/tmp/*
+css-module.js
+rollup-plugin-css-module.cjs.js
+rollup-plugin-css-module.es6.js

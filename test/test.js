@@ -22,7 +22,8 @@ test('test build with file insertMethod', async t => {
 })
 
 test('test build with css-module insertMethod', async t => {
-  await build('css-module', './stubs/insertmethod-cssmodule.js', 0)
+  const b = await build('css-module', './stubs/insertmethod-cssmodule.js', 0)
+  console.log(b)
   t.pass()
 })
 

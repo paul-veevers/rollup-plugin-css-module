@@ -1,13 +1,15 @@
 {
   "name": "rollup-plugin-css-module",
   "description": "Rollup plugin for CSS modules",
-  "version": "0.0.20",
+  "version": "0.0.24",
   "license": "MIT",
-  "main": "dist/rollup-plugin-css-module.cjs.js",
-  "jsnext:main": "dist/rollup-plugin-css-module.es6.js",
+  "main": "rollup-plugin-css-module.cjs.js",
+  "jsnext:main": "rollup-plugin-css-module.es6.js",
   "files": [
-    "dist",
-    "README"
+    "rollup-plugin-css-module.cjs.js",
+    "rollup-plugin-css-module.es6.js",
+    "css-module.js",
+    "README.md"
   ],
   "author": {
     "email": "veevers.paul@gmail.com",
@@ -80,8 +82,8 @@
   },
   "scripts": {
     "test": "standard && nyc ava",
-    "prebuild": "npm run test && rm -rf dist",
-    "build": "rollup -c && cp src/css-module.js dist",
+    "prebuild": "npm run test && rm css-module.js rollup-plugin-css-module.cjs.js rollup-plugin-css-module.es6.js",
+    "build": "rollup -c && cp src/css-module.js .",
     "prepublish": "npm run build"
   }
 }

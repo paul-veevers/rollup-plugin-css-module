@@ -1,5 +1,7 @@
 @value primary, secondary from "stubs/utils.css";
 
+@value fontFamily: "elevio-noto-sans", Helvetica, Arial, sans-serif;
+
 .button {
   border-color: primary;
   font-family: "noto-sans", Helvetica, Arial, sans-serif;

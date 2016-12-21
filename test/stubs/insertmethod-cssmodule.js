@@ -8,7 +8,7 @@ function a () {
   document.body.appendChild(button)
 
   const div = document.createElement('div')
-  div.className = localStyles.margin
+  div.className = localStyles.margin + ' ' + localStyles.fontFamily
   document.body.appendChild(div)
 
   const h1 = document.createElement('h1')

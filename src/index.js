@@ -83,7 +83,7 @@ export default function cssModule (options = {}) {
         }
         return {
           code: Object.keys(result.local.exportTokens).reduce((acc, key) => {
-            acc += `export var ${key} = '${result.local.exportTokens[key]}';`
+            acc += `export var ${key} = ${JSON.stringify(result.local.exportTokens[key])};`
             return acc
           }, '')
         }
