@@ -1,4 +1,4 @@
-@value primary, secondary from "stubs/utils.css";
+@value primary, secondary from "test/stubs/utils.css";
 
 @value fontFamily: "elevio-noto-sans", Helvetica, Arial, sans-serif;
 
@@ -16,7 +16,7 @@
 }
 
 .margin {
-  composes: marginUtils from 'stubs/utils.css';
+  composes: marginUtils from 'test/stubs/utils.css';
 }
 
 .doNotMangleMe {

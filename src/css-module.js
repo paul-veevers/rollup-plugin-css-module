@@ -24,7 +24,7 @@ function reduce (arr, cb, initValue) {
 
 // Credit: https://github.com/substack/insert-css/blob/master/index.js
 // Heavily modified
-export function init () {
+function init () {
   var styleElement = document.createElement('style')
   styleElement.className = CLASS_NAME
   styleElement.setAttribute('type', 'text/css')
@@ -36,14 +36,14 @@ export function init () {
   }
 }
 
-export function terminate () {
+function terminate () {
   var elems = document.getElementsByClassName(CLASS_NAME)
   forEach(elems, function (elem) {
     elem.parentNode.removeChild(elem)
   })
 }
 
-export function getCSS (selector) {
+function getCSS (selector) {
   var elem = document.getElementsByClassName(CLASS_NAME)
   if (!elem || !elem[0] || !elem[0].sheet) return null
   var selectors = elem[0].sheet.rules || elem[0].sheet.cssRules
@@ -55,4 +55,10 @@ export function getCSS (selector) {
     }
     return acc
   }, '')
+}
+
+module.exports = {
+  init: init,
+  terminate: terminate,
+  getCSS: getCSS
 }

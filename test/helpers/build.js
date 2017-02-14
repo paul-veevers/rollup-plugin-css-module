@@ -15,13 +15,13 @@ const babelOpts = {
   exclude: ['**/*.css']
 }
 
-export default function build (insertMethod = 'iife', entry = './stubs/default.js', scopeName = 0, logging = false, treeshake = true) {
+export default function build (insertMethod = 'iife', entry = './test/stubs/default.js', scopeName = 0, logging = false, treeshake = true) {
   return rollup({
     entry,
     plugins: [
       css({
         insertMethod,
-        fileName: './tmp/fileName.css',
+        fileName: './test/tmp/fileName.css',
         generateScopedName: scopeTypes[scopeName],
         ignore: ['doNotMangleMe'],
         before: [
@@ -32,7 +32,7 @@ export default function build (insertMethod = 'iife', entry = './stubs/default.j
         ],
         afterForced: [],
         globals: [
-          './stubs/global.css'
+          './test/stubs/global.css'
         ],
         treeshake: {
           warning: logging,
